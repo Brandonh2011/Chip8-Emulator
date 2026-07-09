@@ -2,6 +2,8 @@
 compile_commands.json
 compile.sh
 ROMS/
+emulator
+
 # Prerequisites
 *.d
 
