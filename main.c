@@ -51,6 +51,56 @@ void drawSprite(Chip8 *chip8, uint8_t xPos, uint8_t yPos, uint8_t n)
 	}
 }
 
+void emulate_instruction(Chip8 *chip8)
+{
+	uint8_t byte1 = chip8->memory[chip8->PC];
+	uint8_t byte2 = chip8->memory[chip8->PC+1];
+	uint16_t opcode = (byte1 << 8) | byte2;
+	chip8->inst.NNN = opcode & 0x0FFF;
+	chip8->inst.NN = opcode & 0x0FF;
+	chip8->inst.N = opcode & 0x0F;
+	chip8->inst.x = (opcode & 0x0F00) >> 8;
+	chip8->inst.y = (opcode & 0x00F0) >> 4;
+	bool jumped = false;
+	switch (opcode & 0xF000) {
+	case 0x0000:
+		switch (opcode) {
+		case 0x00E0:
+			// CLS
+			memset(chip8->screen, 0, sizeof(chip8->screen));
+			break;
+		}
+		break;
+	case 0x1000:
+		chip8->PC = chip8->inst.NNN;
+		jumped = true;
+		break;
+	case 0x6000:
+		chip8->V[chip8->inst.x] = chip8->inst.NN;
+		break;
+	case 0x7000:
+		chip8->V[chip8->inst.x] += chip8->inst.N;
+		break;
+	case 0xA000:
+		chip8->I = chip8->inst.NNN;
+		break;
+	case 0xD000:
+	{
+		uint8_t xPos = chip8->V[chip8->inst.x];
+		uint8_t yPos = chip8->V[chip8->inst.y];
+		chip8->V[0xF] = 0;
+		drawSprite(chip8, xPos, yPos, chip8->inst.N);
+	}
+		break;
+	default:
+		printf("Opcode: 0x%4X not yet implemented.\n", opcode);
+	}
+	if (!jumped)
+		chip8->PC += 2;
+	if (chip8->PC >=4096)
+		exit(0);
+}
+
 int main(int argc, char* argv[])
 {
 	if (argc != 2)
@@ -102,52 +152,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		uint8_t byte1 = chip8.memory[chip8.PC];
-		uint8_t byte2 = chip8.memory[chip8.PC+1];
-		uint16_t opcode = (byte1 << 8) | byte2;
-		chip8.inst.NNN = opcode & 0x0FFF;
-		chip8.inst.NN = opcode & 0x0FF;
-		chip8.inst.N = opcode & 0x0F;
-		chip8.inst.x = (opcode & 0x0F00) >> 8;
-		chip8.inst.y = (opcode & 0x00F0) >> 4;
-		bool jumped = false;
-		switch (opcode & 0xF000) {
-		case 0x0000:
-			switch (opcode) {
-			case 0x00E0:
-				// CLS
-				memset(chip8.screen, 0, sizeof(chip8.screen));
-				break;
-			}
-			break;
-		case 0x1000:
-			chip8.PC = chip8.inst.NNN;
-			jumped = true;
-			break;
-		case 0x6000:
-			chip8.V[chip8.inst.x] = chip8.inst.NN;
-			break;
-		case 0x7000:
-			chip8.V[chip8.inst.x] += chip8.inst.N;
-			break;
-		case 0xA000:
-			chip8.I = chip8.inst.NNN;
-			break;
-		case 0xD000:
-		{
-			uint8_t xPos = chip8.V[chip8.inst.x];
-			uint8_t yPos = chip8.V[chip8.inst.y];
-			chip8.V[0xF] = 0;
-			drawSprite(&chip8, xPos, yPos, chip8.inst.N);
-		}
-			break;
-		default:
-			printf("Opcode: 0x%4X not yet implemented.\n", opcode);
-		}
-		if (!jumped)
-			chip8.PC += 2;
-		if (chip8.PC >=4096)
-			return 0;
+		emulate_instruction(&chip8);
 		drawScreen(sur, &chip8);
 		SDL_UpdateWindowSurface(win);
 		SDL_Delay(2);
