@@ -12,6 +12,8 @@ typedef struct
 
 	uint16_t PC;
 	uint16_t I;
+	uint16_t stack[12];
+	uint8_t stack_ptr;
 
 	struct inst
 	{

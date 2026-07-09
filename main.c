@@ -57,11 +57,11 @@ void emulateInstruction(Chip8 *chip8)
 	uint8_t byte2 = chip8->memory[chip8->PC+1];
 	uint16_t opcode = (byte1 << 8) | byte2;
 	chip8->inst.NNN = opcode & 0x0FFF;
-	chip8->inst.NN = opcode & 0x0FF;
+	chip8->inst.NN = opcode & 0x00FF;
 	chip8->inst.N = opcode & 0x0F;
 	chip8->inst.x = (opcode & 0x0F00) >> 8;
 	chip8->inst.y = (opcode & 0x00F0) >> 4;
-	bool jumped = false;
+	chip8->PC += 2;
 	switch (opcode & 0xF000) {
 	case 0x0000:
 		switch (opcode) {
@@ -69,17 +69,39 @@ void emulateInstruction(Chip8 *chip8)
 			// CLS
 			memset(chip8->screen, 0, sizeof(chip8->screen));
 			break;
+		case 0x00EE:
+			// RET
+			if (chip8->stack_ptr == 0)
+			{
+				printf("Stack underflow.\n");
+				exit(1);
+			}
+			chip8->stack_ptr--;
+			chip8->PC = chip8->stack[chip8->stack_ptr];
+			break;
 		}
 		break;
 	case 0x1000:
+		// JMP
 		chip8->PC = chip8->inst.NNN;
-		jumped = true;
 		break;
+	case 0x2000:
+		// CALL
+		if (chip8->stack_ptr >= 12)
+		{
+			printf("Stack overflow.\n");
+			exit(1);
+		}
+		chip8->stack[chip8->stack_ptr] = chip8->PC; 
+		chip8->stack_ptr++;
+		chip8->PC = chip8->inst.NNN;
+		break;
+
 	case 0x6000:
 		chip8->V[chip8->inst.x] = chip8->inst.NN;
 		break;
 	case 0x7000:
-		chip8->V[chip8->inst.x] += chip8->inst.N;
+		chip8->V[chip8->inst.x] += chip8->inst.NN;
 		break;
 	case 0xA000:
 		chip8->I = chip8->inst.NNN;
@@ -95,8 +117,6 @@ void emulateInstruction(Chip8 *chip8)
 	default:
 		printf("Opcode: 0x%4X not yet implemented.\n", opcode);
 	}
-	if (!jumped)
-		chip8->PC += 2;
 	if (chip8->PC >=4096)
 		exit(0);
 }
@@ -139,6 +159,7 @@ int main(int argc, char* argv[])
 	Chip8 chip8 = {0};
 	read_to_memory(chip8.memory, rom, filesize);
 	chip8.PC = 0x200;
+	chip8.stack_ptr = 0;
 	bool running = true;
 	while (running)
 	{
