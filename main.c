@@ -51,7 +51,7 @@ void drawSprite(Chip8 *chip8, uint8_t xPos, uint8_t yPos, uint8_t n)
 	}
 }
 
-void emulate_instruction(Chip8 *chip8)
+void emulateInstruction(Chip8 *chip8)
 {
 	uint8_t byte1 = chip8->memory[chip8->PC];
 	uint8_t byte2 = chip8->memory[chip8->PC+1];
@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		emulate_instruction(&chip8);
+		emulateInstruction(&chip8);
 		drawScreen(sur, &chip8);
 		SDL_UpdateWindowSurface(win);
 		SDL_Delay(2);
