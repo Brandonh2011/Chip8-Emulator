@@ -3,7 +3,7 @@ compile_commands.json
 compile.sh
 ROMS/
 emulator
-
+.cache/
 # Prerequisites
 *.d
 
