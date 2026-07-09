@@ -12,6 +12,16 @@ typedef struct
 
 	uint16_t PC;
 	uint16_t I;
+
+	struct inst
+	{
+		uint8_t N;
+		uint8_t NN;
+		uint16_t NNN;
+		uint8_t x;
+		uint8_t y;
+	} inst;
+
 } Chip8;
 
 #endif

@@ -105,6 +105,11 @@ int main(int argc, char* argv[])
 		uint8_t byte1 = chip8.memory[chip8.PC];
 		uint8_t byte2 = chip8.memory[chip8.PC+1];
 		uint16_t opcode = (byte1 << 8) | byte2;
+		chip8.inst.NNN = opcode & 0x0FFF;
+		chip8.inst.NN = opcode & 0x0FF;
+		chip8.inst.N = opcode & 0x0F;
+		chip8.inst.x = (opcode & 0x0F00) >> 8;
+		chip8.inst.y = (opcode & 0x00F0) >> 4;
 		bool jumped = false;
 		switch (opcode & 0xF000) {
 		case 0x0000:
@@ -116,34 +121,28 @@ int main(int argc, char* argv[])
 			}
 			break;
 		case 0x1000:
-			chip8.PC = opcode & 0x0FFF;
+			chip8.PC = chip8.inst.NNN;
 			jumped = true;
 			break;
 		case 0x6000:
-			chip8.V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+			chip8.V[chip8.inst.x] = chip8.inst.NN;
 			break;
 		case 0x7000:
-		{
-			uint8_t x = (opcode & 0x0F00) >> 8;
-			uint8_t n = opcode & 0x00FF;
-			chip8.V[x] += n;
-		}
+			chip8.V[chip8.inst.x] += chip8.inst.N;
 			break;
 		case 0xA000:
-			chip8.I = opcode & 0x0FFF;
+			chip8.I = chip8.inst.NNN;
 			break;
 		case 0xD000:
 		{
-			uint8_t x = (opcode & 0x0F00) >> 8;
-			uint8_t y = (opcode & 0x00F0) >> 4;
-			uint8_t n = opcode & 0x000F;
-
-			uint8_t xPos = chip8.V[x];
-			uint8_t yPos = chip8.V[y];
+			uint8_t xPos = chip8.V[chip8.inst.x];
+			uint8_t yPos = chip8.V[chip8.inst.y];
 			chip8.V[0xF] = 0;
-			drawSprite(&chip8, xPos, yPos, n);
+			drawSprite(&chip8, xPos, yPos, chip8.inst.N);
 		}
 			break;
+		default:
+			printf("Opcode: 0x%4X not yet implemented.\n", opcode);
 		}
 		if (!jumped)
 			chip8.PC += 2;
