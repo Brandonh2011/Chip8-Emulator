@@ -1,3 +1,7 @@
+# Project Specific
+compile_commands.json
+compile.sh
+ROMS/
 # Prerequisites
 *.d
 

@@ -1,0 +1,160 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <SDL2/SDL.h>
+#include <stdbool.h>
+#include <sys/stat.h>
+
+#include "file.h"
+#include "Chip8.h"
+
+#define SCALE 16
+
+void drawScreen(SDL_Surface *surface, Chip8 *chip8)
+{
+	Uint32 color;
+	for (int y = 0; y < 32; y++)
+	{
+		for (int x = 0; x < 64; x++)
+		{
+			if (chip8->screen[y][x] == 0)
+			{
+				color = SDL_MapRGB(surface->format, 0, 0, 0); // BLACK
+			}
+			else
+			{
+				color = SDL_MapRGB(surface->format, 255, 255, 255); // WHITE
+			}
+			SDL_Rect rect = {x*SCALE, y*SCALE, SCALE, SCALE};
+			SDL_FillRect(surface, &rect, color);
+		}
+	}
+}
+
+void drawSprite(Chip8 *chip8, uint8_t xPos, uint8_t yPos, uint8_t n)
+{
+	for (int row = 0; row < n; row++)
+	{
+		uint8_t sb = chip8->memory[chip8->I + row];
+
+		for (int col = 0; col < 8; col++)
+		{
+			if ((sb & (0x80 >> col)) != 0)
+			{
+				uint8_t sx = (xPos + col) % 64;
+				uint8_t sy = (yPos + row) % 32;
+				uint8_t *pixel = &chip8->screen[sy][sx];
+				if (*pixel == 1)
+					chip8->V[0xF] = 1;
+				*pixel ^= 1;
+			}
+		}
+	}
+}
+
+int main(int argc, char* argv[])
+{
+	if (argc != 2)
+	{
+		printf("Missing ROM file.\n");
+		printf("Usage: %s <ch8 ROM file>", argv[0]);
+		return 1;
+	}
+	const char* rom = argv[1];
+	struct stat st;
+	long filesize = get_file_size(rom, &st);
+	if (filesize == 0 || filesize > 4096 - 0x200)
+	{
+		printf("ROM file is too big or corrupted.\n");
+		return 1;
+	}
+	if(SDL_Init(SDL_INIT_EVERYTHING) < 0)
+	{
+		printf("SDL_Init failed: %s\n", SDL_GetError());
+		return 1;
+	}
+	SDL_Window *win = 
+		SDL_CreateWindow("CHIP8 Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 64*SCALE, 32*SCALE, 0);
+	if (!win)
+	{
+		printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
+		return 1;
+	}
+	SDL_Surface *sur = SDL_GetWindowSurface(win);
+	if (!sur)
+	{
+		printf("SDL_GetWindowSurface failed: %s\n", SDL_GetError());
+		return 1;
+	}
+
+	Chip8 chip8 = {0};
+	read_to_memory(chip8.memory, rom, filesize);
+	chip8.PC = 0x200;
+	bool running = true;
+	while (running)
+	{
+		SDL_Event e;
+		while (SDL_PollEvent(&e))
+		{
+			switch (e.type) {
+			case SDL_QUIT:
+				running = false;
+				break;
+			}
+		}
+
+		uint8_t byte1 = chip8.memory[chip8.PC];
+		uint8_t byte2 = chip8.memory[chip8.PC+1];
+		uint16_t opcode = (byte1 << 8) | byte2;
+		bool jumped = false;
+		switch (opcode & 0xF000) {
+		case 0x0000:
+			switch (opcode) {
+			case 0x00E0:
+				// CLS
+				memset(chip8.screen, 0, sizeof(chip8.screen));
+				break;
+			}
+			break;
+		case 0x1000:
+			chip8.PC = opcode & 0x0FFF;
+			jumped = true;
+			break;
+		case 0x6000:
+			chip8.V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
+			break;
+		case 0x7000:
+		{
+			uint8_t x = (opcode & 0x0F00) >> 8;
+			uint8_t n = opcode & 0x00FF;
+			chip8.V[x] += n;
+		}
+			break;
+		case 0xA000:
+			chip8.I = opcode & 0x0FFF;
+			break;
+		case 0xD000:
+		{
+			uint8_t x = (opcode & 0x0F00) >> 8;
+			uint8_t y = (opcode & 0x00F0) >> 4;
+			uint8_t n = opcode & 0x000F;
+
+			uint8_t xPos = chip8.V[x];
+			uint8_t yPos = chip8.V[y];
+			chip8.V[0xF] = 0;
+			drawSprite(&chip8, xPos, yPos, n);
+		}
+			break;
+		}
+		if (!jumped)
+			chip8.PC += 2;
+		if (chip8.PC >=4096)
+			return 0;
+		drawScreen(sur, &chip8);
+		SDL_UpdateWindowSurface(win);
+		SDL_Delay(2);
+	}
+	SDL_FreeSurface(sur);
+	SDL_DestroyWindow(win);
+	SDL_Quit();
+	return 0;
+}
