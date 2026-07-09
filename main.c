@@ -96,12 +96,27 @@ void emulateInstruction(Chip8 *chip8)
 		chip8->stack_ptr++;
 		chip8->PC = chip8->inst.NNN;
 		break;
-
+	case 0x3000:
+		if (chip8->V[chip8->inst.x] == chip8->inst.NN)
+			chip8->PC += 2;
+		break;
+	case 0x4000:
+		if (chip8->V[chip8->inst.x] != chip8->inst.NN)
+			chip8->PC += 2;
+		break;
+	case 0x5000:
+		if (chip8->V[chip8->inst.x] == chip8->V[chip8->inst.y])
+			chip8->PC += 2;
+		break;
 	case 0x6000:
 		chip8->V[chip8->inst.x] = chip8->inst.NN;
 		break;
 	case 0x7000:
 		chip8->V[chip8->inst.x] += chip8->inst.NN;
+		break;
+	case 0x9000:
+		if (chip8->V[chip8->inst.x] != chip8->V[chip8->inst.y])
+			chip8->PC += 2;
 		break;
 	case 0xA000:
 		chip8->I = chip8->inst.NNN;
