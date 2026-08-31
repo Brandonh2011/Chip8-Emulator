@@ -114,6 +114,38 @@ void emulateInstruction(Chip8 *chip8)
 	case 0x7000:
 		chip8->V[chip8->inst.x] += chip8->inst.NN;
 		break;
+	case 0x8000:
+		switch (chip8->inst.N) {
+		case 0x00:
+			chip8->V[chip8->inst.x] = chip8->V[chip8->inst.y];
+			break;
+		case 0x01:
+			chip8->V[chip8->inst.x] |= chip8->V[chip8->inst.y];
+			break;
+		case 0x02:
+			chip8->V[chip8->inst.x] &= chip8->V[chip8->inst.y];
+			break;
+		case 0x03:
+			chip8->V[chip8->inst.x] ^= chip8->V[chip8->inst.y];
+			break;
+		case 0x04:
+			if ((uint16_t)chip8->V[chip8->inst.x] + chip8->V[chip8->inst.y] > 255)
+				chip8->V[0xF] = 1;
+			chip8->V[chip8->inst.x] += chip8->V[chip8->inst.y];
+			break;
+		case 0x05:
+			if (chip8->V[chip8->inst.y] > chip8->V[chip8->inst.x])
+				chip8->V[0xF] = 1;
+			chip8->V[chip8->inst.x] -= chip8->V[chip8->inst.y];
+			break;
+		case 0x06:
+			chip8->V[chip8->inst.x] = chip8->V[chip8->inst.y];
+			uint8_t shifted_out = chip8->V[chip8->inst.x] & 0x01;
+			chip8->V[chip8->inst.x] >>= 1;
+			chip8->V[0xF] = shifted_out;
+			break;
+		}
+		break;
 	case 0x9000:
 		if (chip8->V[chip8->inst.x] != chip8->V[chip8->inst.y])
 			chip8->PC += 2;
