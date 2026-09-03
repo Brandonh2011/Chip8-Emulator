@@ -192,6 +192,7 @@ void emulateInstruction(Chip8 *chip8)
 				chip8->I += chip8->V[chip8->inst.x];
 				break;
 		}
+		break;
 	default:
 		printf("Opcode: 0x%4X not yet implemented.\n", opcode);
 		break;
