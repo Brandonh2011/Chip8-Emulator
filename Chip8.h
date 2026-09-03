@@ -15,6 +15,9 @@ typedef struct
 	uint16_t stack[12];
 	uint8_t stack_ptr;
 
+	uint8_t delay_timer;
+	uint8_t sound_timer;
+
 	struct inst
 	{
 		uint8_t N;

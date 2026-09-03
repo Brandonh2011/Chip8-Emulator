@@ -177,8 +177,24 @@ void emulateInstruction(Chip8 *chip8)
 		drawSprite(chip8, xPos, yPos, chip8->inst.N);
 	}
 		break;
+	case 0xF000:
+		switch(chip8->inst.NN) {
+			case 0x07:
+				chip8->V[chip8->inst.x] = chip8->delay_timer;
+				break;
+			case 0x15:
+				chip8->delay_timer = chip8->V[chip8->inst.x];
+				break;
+			case 0x18:
+				chip8->sound_timer = chip8->V[chip8->inst.x];
+				break;
+			case 0x1E:
+				chip8->I += chip8->V[chip8->inst.x];
+				break;
+		}
 	default:
 		printf("Opcode: 0x%4X not yet implemented.\n", opcode);
+		break;
 	}
 	if (chip8->PC >=4096)
 		exit(0);
