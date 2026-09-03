@@ -166,6 +166,9 @@ void emulateInstruction(Chip8 *chip8)
 	case 0xA000:
 		chip8->I = chip8->inst.NNN;
 		break;
+	case 0xB000:
+		chip8->PC = chip8->inst.NNN + chip8->V[0x0];
+		break;
 	case 0xD000:
 	{
 		uint8_t xPos = chip8->V[chip8->inst.x];
