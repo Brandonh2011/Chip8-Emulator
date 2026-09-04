@@ -5,11 +5,32 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <time.h>
+#include <string.h>
 
 #include "file.h"
 #include "Chip8.h"
 
 #define SCALE 16
+#define FONTSIZE 80
+
+static const uint8_t font[FONTSIZE] = {
+    0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
+    0x20, 0x60, 0x20, 0x20, 0x70, // 1
+    0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
+    0xF0, 0x10, 0xF0, 0x10, 0xF0, // 3
+    0x90, 0x90, 0xF0, 0x10, 0x10, // 4
+    0xF0, 0x80, 0xF0, 0x10, 0xF0, // 5
+    0xF0, 0x80, 0xF0, 0x90, 0xF0, // 6
+    0xF0, 0x10, 0x20, 0x40, 0x40, // 7
+    0xF0, 0x90, 0xF0, 0x90, 0xF0, // 8
+    0xF0, 0x90, 0xF0, 0x10, 0xF0, // 9
+    0xF0, 0x90, 0xF0, 0x90, 0x90, // A
+    0xE0, 0x90, 0xE0, 0x90, 0xE0, // B
+    0xF0, 0x80, 0x80, 0x80, 0xF0, // C
+    0xE0, 0x90, 0x90, 0x90, 0xE0, // D
+    0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
+    0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+};
 
 void drawScreen(SDL_Surface *surface, Chip8 *chip8)
 {
@@ -219,6 +240,22 @@ void emulateInstruction(Chip8 *chip8)
 			case 0x1E:
 				chip8->I += chip8->V[chip8->inst.x];
 				break;
+			case 0x29:
+				chip8->I = chip8->V[chip8->inst.x] * 5;
+				break;
+			case 0x33:
+				chip8->memory[chip8->I] = chip8->V[chip8->inst.x] / 100;
+				chip8->memory[chip8->I+1] = (chip8->V[chip8->inst.x] / 10) % 10;
+				chip8->memory[chip8->I+2] = chip8->V[chip8->inst.x] % 10;
+				break;
+			case 0x55:
+				for (uint8_t i = 0; i <= chip8->inst.x; i++)
+					chip8->memory[chip8->I + i] = chip8->V[i];
+				break;
+			case 0x65:
+				for (uint8_t i = 0; i <= chip8->inst.x; i++)
+					chip8->V[i]= chip8->memory[chip8->I + i];
+				break;
 			default:
             	printf("Opcode: 0x%04X not implemented.\n", opcode);
             	break;
@@ -268,6 +305,7 @@ int main(int argc, char* argv[])
 	}
 
 	Chip8 chip8 = {0};
+	memcpy(chip8.memory, font, sizeof(font));
 	read_to_memory(chip8.memory, rom, filesize);
 	chip8.PC = 0x200;
 	chip8.stack_ptr = 0;
