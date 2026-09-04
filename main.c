@@ -81,6 +81,9 @@ void emulateInstruction(Chip8 *chip8)
 			chip8->stack_ptr--;
 			chip8->PC = chip8->stack[chip8->stack_ptr];
 			break;
+		default:
+            printf("Opcode: 0x%04X not implemented.\n", opcode);
+            break;
 		}
 		break;
 	case 0x1000:
@@ -159,6 +162,9 @@ void emulateInstruction(Chip8 *chip8)
     		chip8->V[0xF] = chip8->V[chip8->inst.x] >> 7;
     		chip8->V[chip8->inst.x] <<= 1;
     		break;
+		default:
+            printf("Opcode: 0x%04X not implemented.\n", opcode);
+            break;
 		}
 		break;
 	case 0x9000:
@@ -196,6 +202,9 @@ void emulateInstruction(Chip8 *chip8)
 			case 0x1E:
 				chip8->I += chip8->V[chip8->inst.x];
 				break;
+			default:
+            	printf("Opcode: 0x%04X not implemented.\n", opcode);
+            	break;
 		}
 		break;
 	default:
