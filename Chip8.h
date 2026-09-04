@@ -27,6 +27,8 @@ typedef struct
 		uint8_t y;
 	} inst;
 
+	uint8_t keys[16];
+
 } Chip8;
 
 #endif
