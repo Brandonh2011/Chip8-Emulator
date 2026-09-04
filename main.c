@@ -3,6 +3,8 @@
 #include <SDL2/SDL.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <stdlib.h>
+#include <time.h>
 
 #include "file.h"
 #include "Chip8.h"
@@ -169,6 +171,9 @@ void emulateInstruction(Chip8 *chip8)
 	case 0xB000:
 		chip8->PC = chip8->inst.NNN + chip8->V[0x0];
 		break;
+	case 0xC000:
+		chip8->V[chip8->inst.x] = rand() & chip8->inst.NN;
+		break;
 	case 0xD000:
 	{
 		uint8_t xPos = chip8->V[chip8->inst.x];
@@ -241,6 +246,7 @@ int main(int argc, char* argv[])
 	chip8.PC = 0x200;
 	chip8.stack_ptr = 0;
 	bool running = true;
+	srand(time(NULL));
 	while (running)
 	{
 		SDL_Event e;
