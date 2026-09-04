@@ -202,6 +202,7 @@ void emulateInstruction(Chip8 *chip8)
 				printf("Opcode: 0x%04X not implemented.\n", opcode);
 				break;
 		}
+		break;
 	case 0xF000:
 		switch(chip8->inst.NN) {
 			case 0x07:
