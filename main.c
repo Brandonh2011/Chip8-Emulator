@@ -136,6 +136,8 @@ void emulateInstruction(Chip8 *chip8)
 		case 0x04:
 			if ((uint16_t)chip8->V[chip8->inst.x] + chip8->V[chip8->inst.y] > 255)
 				chip8->V[0xF] = 1;
+			else
+				chip8->V[0xF] = 0;
 			chip8->V[chip8->inst.x] += chip8->V[chip8->inst.y];
 			break;
 		case 0x05:
