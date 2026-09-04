@@ -231,6 +231,23 @@ void emulateInstruction(Chip8 *chip8)
 			case 0x07:
 				chip8->V[chip8->inst.x] = chip8->delay_timer;
 				break;
+			case 0x0A:
+			{
+    			bool key_pressed = false;
+   				for (uint8_t i = 0; i < 16; i++)
+   				{
+       				if (chip8->keys[i])
+       				{
+           				chip8->V[chip8->inst.x] = i;
+           				key_pressed = true;
+           				break;
+        			}
+    			}
+
+    			if (!key_pressed)
+        			chip8->PC -= 2;
+    			break;
+			}
 			case 0x15:
 				chip8->delay_timer = chip8->V[chip8->inst.x];
 				break;
@@ -311,6 +328,9 @@ int main(int argc, char* argv[])
 	chip8.stack_ptr = 0;
 	bool running = true;
 	srand(time(NULL));
+
+	uint32_t last_timer_update = SDL_GetTicks();
+
 	while (running)
 	{
 		SDL_Event e;
@@ -372,10 +392,20 @@ int main(int argc, char* argv[])
 			}
 		}
 
+		uint32_t now = SDL_GetTicks();
+		if (now - last_timer_update >= 16)
+		{
+			if (chip8.delay_timer > 0)
+				chip8.delay_timer--;
+			if (chip8.sound_timer >0)
+				chip8.sound_timer--;
+
+			last_timer_update = now;
+		}
 		emulateInstruction(&chip8);
 		drawScreen(sur, &chip8);
 		SDL_UpdateWindowSurface(win);
-		SDL_Delay(2);
+		SDL_Delay(16);
 	}
 	SDL_FreeSurface(sur);
 	SDL_DestroyWindow(win);
